@@ -1964,12 +1964,114 @@ public:
         add_entry(new CmdMenuEntry("Show options file in finder",
             MEL_ITEM, 'O', CMD_REVEAL_OPTIONS));
 #endif
+        add_entry(new CmdMenuEntry("Edit Game Options", MEL_ITEM, 'E', CMD_SHOW_OPT_MENU));  // add entry to change game options
+
         add_entry(new CmdMenuEntry("", MEL_SUBTITLE));
         add_entry(new CmdMenuEntry(
                             "Quit and <lightred>abandon character</lightred>",
             MEL_ITEM, 'Q', CMD_QUIT, false));
     }
 
+    vector<MenuEntry *> show(bool reuse_selections = false) override
+    {
+        fill_entries();
+        return Menu::show(reuse_selections);
+    }
+};
+
+class OptionMenu : public Menu
+{
+// this could be easily generalized for other menus that select among commands
+// if it's ever needed
+public:
+    class CmdMenuEntry : public MenuEntry
+    {
+    public:
+        CmdMenuEntry(string label, MenuEntryLevel _level, int hotk=0,
+                                                command_type _cmd=CMD_NO_CMD,
+                                                bool _uses_popup=true)
+            : MenuEntry(label, _level, 1, hotk), cmd(_cmd),
+              uses_popup(_uses_popup)
+        {
+            if (tileidx_command(cmd) != TILEG_TODO)
+                add_tile(tileidx_command(cmd));
+        }
+
+        command_type cmd;
+        bool uses_popup;
+    };
+
+    command_type cmd;
+    OptionMenu()
+        : Menu(MF_SINGLESELECT | MF_ALLOW_FORMATTING
+                | MF_ARROWS_SELECT | MF_WRAP | MF_INIT_HOVER),
+          cmd(CMD_NO_CMD)
+    {
+        set_tag("option_menu");
+        action_cycle = Menu::CYCLE_NONE;
+        menu_action  = Menu::ACT_EXECUTE;
+        set_title(new MenuEntry(
+            string("<w>" CRAWL " ") + "Option Menu" + "</w>",
+            MEL_TITLE));
+        on_single_selection = [this](const MenuEntry& item)
+        {
+            const CmdMenuEntry *c = dynamic_cast<const CmdMenuEntry *>(&item);
+            if (c)
+            {
+                if (c->uses_popup)
+                {
+                    // recurse
+                    if (c->cmd != CMD_NO_CMD)
+                        process_command(c->cmd, CMD_GAME_MENU);
+                    return true;
+                }
+                // otherwise, exit menu and process in the main process_command call
+                cmd = c->cmd;
+                return false;
+            }
+            return true;
+        };
+    }
+
+    void fill_entries()
+    {
+        clear();
+        add_entry(new CmdMenuEntry("", MEL_SUBTITLE));
+        add_entry(new CmdMenuEntry("Return to Menu", MEL_ITEM, CK_ESCAPE,
+            CMD_NO_CMD, false));
+        items[1]->add_tile(tileidx_command(CMD_GAME_MENU));
+    }
+        // n.b. CMD_SAVE_GAME_NOW crashes on returning to the main menu if we
+        // don't exit out of this popup now, not sure why
+      /*  add_entry(new CmdMenuEntry(
+            (crawl_should_restart(game_exit::save)
+                            ? "Save and return to main menu"
+                            : "Save and exit"),
+            MEL_ITEM, 'S', CMD_SAVE_GAME_NOW, false));
+        add_entry(new CmdMenuEntry("Generate and view character dump",
+            MEL_ITEM, '#', CMD_SHOW_CHARACTER_DUMP));
+#ifdef USE_TILE_LOCAL
+        add_entry(new CmdMenuEntry("Edit player tile",
+            MEL_ITEM, '-', CMD_EDIT_PLAYER_TILE));
+#endif
+        add_entry(new CmdMenuEntry("Edit macros",
+            MEL_ITEM, '~', CMD_MACRO_MENU));
+        add_entry(new CmdMenuEntry("Help and manual",
+            MEL_ITEM, '?', CMD_DISPLAY_COMMANDS));
+        add_entry(new CmdMenuEntry("Lookup info",
+            MEL_ITEM, '/', CMD_LOOKUP_HELP));
+#ifdef TARGET_OS_MACOSX
+        add_entry(new CmdMenuEntry("Show options file in finder",
+            MEL_ITEM, 'O', CMD_REVEAL_OPTIONS));
+#endif
+        add_entry(new CmdMenuEntry("Edit Game Options", MEL_ITEM, 'E', CMD_GAME_MENU));  // add entry to change game options
+
+        add_entry(new CmdMenuEntry("", MEL_SUBTITLE));
+        add_entry(new CmdMenuEntry(
+                            "Quit and <lightred>abandon character</lightred>",
+            MEL_ITEM, 'Q', CMD_QUIT, false));
+    }
+*/
     vector<MenuEntry *> show(bool reuse_selections = false) override
     {
         fill_entries();
@@ -2069,6 +2171,7 @@ void process_command(command_type cmd, command_type prev_cmd)
     case CMD_MACRO_ADD:      macro_quick_add();    break;
     case CMD_MACRO_MENU:     macro_menu();    break;
 
+    case CMD_SHOW_OPT_MENU: {OptionMenu optMenu; optMenu.show(); if (optMenu.cmd == CMD_NO_CMD){return;} cmd = optMenu.cmd; break;}
     // Toggle commands.
     case CMD_DISABLE_MORE: crawl_state.show_more_prompt = false; break;
     case CMD_ENABLE_MORE:  crawl_state.show_more_prompt = true;  break;
