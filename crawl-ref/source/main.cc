@@ -2022,18 +2022,20 @@ public:
                 {
                     // recurse
                     if (c->cmd != CMD_NO_CMD)
+                    {
                         process_command(c->cmd, CMD_GAME_MENU);
                         std::vector<MenuEntry*> s = selected_entries(); // This section deals with the toggling of the options menu
-                        char last_let = s[0]->text[s[0]->text.size() - 1];
-                        if (last_let == 'f')
+                        char last_let = s[0]->text[s[0]->text.size() - 1]; // last letter of the selected value 
+                        if (last_let == 'f') // implies that just selected to be off 
                         {
-                            s[0]->text = s[0]->text.substr(0, s[0]->text.size() - 3) + "on"; 
+                            s[0]->text = s[0]->text.substr(0, s[0]->text.size() - 3) + "on";  // next selection is on 
                         }
-                        else
+                        else // just selected to be on 
                         {
-                            s[0]->text = s[0]->text.substr(0, s[0]->text.size() - 2) + "off";
+                            s[0]->text = s[0]->text.substr(0, s[0]->text.size() - 2) + "off"; // next selection is off
                         }
-                        update_menu();
+                        update_menu(); // update changes to the menu
+                    }
                     return true;
                 }
                 // otherwise, exit menu and process in the main process_command call
@@ -2051,16 +2053,16 @@ public:
         add_entry(new CmdMenuEntry("Return to Menu", MEL_ITEM, CK_ESCAPE,
             CMD_NO_CMD, false));
         items[1]->add_tile(tileidx_command(CMD_GAME_MENU));
-        std::string on_or_off = Options.remember_name ? "off" : "on";
-        add_entry(new CmdMenuEntry("Toggle Remember Name " + on_or_off, MEL_ITEM, 'R', CMD_TOGGLE_REMBERNAME));
-        on_or_off = Options.autopickup_on ? "off" : "on";
-        add_entry(new CmdMenuEntry("Toggle AutoPickup " + on_or_off, MEL_ITEM, 'A', CMD_TOGGLE_AUTOPICKUP));
-        on_or_off = Options.explore_greedy ? "off" : "on";
-        add_entry(new CmdMenuEntry("Toggle Explore Greedy " + on_or_off, MEL_ITEM, 'G', CMD_TOGGLE_EXPLORE_GREEDY));
-        on_or_off = Options.show_game_time ? "off" : "on";
-        add_entry(new CmdMenuEntry("Toggle Show Game Time " + on_or_off, MEL_ITEM, 'T', CMD_TOGGLE_SHOWGAMETIME));
-        on_or_off = Options.no_save ? "on" : "off";
-        add_entry(new CmdMenuEntry("Toggle Options Save " + on_or_off, MEL_ITEM, 'S', CMD_TOGGLE_SAVE_OPTS));
+        std::string on_or_off = Options.remember_name ? "on" : "off";
+        add_entry(new CmdMenuEntry("Remember Name: " + on_or_off, MEL_ITEM, 'R', CMD_TOGGLE_REMBERNAME));
+        on_or_off = Options.autopickup_on ? "on" : "off";
+        add_entry(new CmdMenuEntry("AutoPickup: " + on_or_off, MEL_ITEM, 'A', CMD_TOGGLE_AUTOPICKUP));
+        on_or_off = Options.explore_greedy ? "on" : "off";
+        add_entry(new CmdMenuEntry("Explore Greedy: " + on_or_off, MEL_ITEM, 'G', CMD_TOGGLE_EXPLORE_GREEDY));
+        on_or_off = Options.show_game_time ? "on" : "off";
+        add_entry(new CmdMenuEntry("Show Game Time: " + on_or_off, MEL_ITEM, 'T', CMD_TOGGLE_SHOWGAMETIME));
+        on_or_off = Options.no_save ? "off" : "on";
+        add_entry(new CmdMenuEntry("Options Save: " + on_or_off, MEL_ITEM, 'S', CMD_TOGGLE_SAVE_OPTS));
     }
         // n.b. CMD_SAVE_GAME_NOW crashes on returning to the main menu if we
         // don't exit out of this popup now, not sure why
