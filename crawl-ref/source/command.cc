@@ -961,6 +961,10 @@ static void _add_formatted_keyhelp(column_composer &cols)
 
     _add_command(cols, 0, CMD_GAME_MENU, "game menu", 2);
     _add_command(cols, 0, CMD_SHOW_OPT_MENU, "show option menu");
+    _add_command(cols, 0, CMD_TOGGLE_REMBERNAME, "Change Remeber Name");
+    _add_command(cols, 0, CMD_TOGGLE_SAVE_OPTS, "Save Options");
+    _add_command(cols, 0, CMD_TOGGLE_EXPLORE_GREEDY, "Change Explore greedy option");
+    _add_command(cols, 0, CMD_TOGGLE_SHOWGAMETIME, "Change View from player turns to game time");
     _add_command(cols, 0, CMD_REPLAY_MESSAGES, "show Previous messages");
     _add_command(cols, 0, CMD_REDRAW_SCREEN, "Redraw screen");
     _add_command(cols, 0, CMD_CLEAR_MAP, "Clear main and level maps");

@@ -2040,6 +2040,12 @@ public:
         add_entry(new CmdMenuEntry("Return to Menu", MEL_ITEM, CK_ESCAPE,
             CMD_NO_CMD, false));
         items[1]->add_tile(tileidx_command(CMD_GAME_MENU));
+       // add_entry(new ToggleableMenuEntry("Turn Sound On", "Turn Sound Off", MEL_ITEM, 0, 'I'))
+        add_entry(new CmdMenuEntry("Toggle Remember Name", MEL_ITEM, 'R', CMD_TOGGLE_REMBERNAME));
+        add_entry(new CmdMenuEntry("Toggle AutoPickup", MEL_ITEM, 'A', CMD_TOGGLE_AUTOPICKUP));
+        add_entry(new CmdMenuEntry("Toggle Explore Greedy", MEL_ITEM, 'G', CMD_TOGGLE_EXPLORE_GREEDY));
+        add_entry(new CmdMenuEntry("Toggle Show Game Time", MEL_ITEM, 'T', CMD_TOGGLE_SHOWGAMETIME));
+        add_entry(new CmdMenuEntry("Toggle Options Save", MEL_ITEM, 'S', CMD_TOGGLE_SAVE_OPTS));
     }
         // n.b. CMD_SAVE_GAME_NOW crashes on returning to the main menu if we
         // don't exit out of this popup now, not sure why
@@ -2176,6 +2182,56 @@ void process_command(command_type cmd, command_type prev_cmd)
     case CMD_DISABLE_MORE: crawl_state.show_more_prompt = false; break;
     case CMD_ENABLE_MORE:  crawl_state.show_more_prompt = true;  break;
 
+    case CMD_TOGGLE_REMBERNAME: {
+        if (Options.remember_name == false)
+            Options.remember_name = true;
+        else
+            Options.remember_name = false;
+        mprf("Remember Name is now %s.", Options.remember_name ? "on" : "off");
+        if (!Options.no_save)
+        {
+            break;
+            // will write code here to save changes
+        }
+        break;
+    }
+
+    case CMD_TOGGLE_EXPLORE_GREEDY: {
+        if (Options.explore_greedy == false)
+            Options.explore_greedy = true;
+        else
+            Options.explore_greedy = false;
+        mprf("Explore Greedy is now %s.", Options.explore_greedy ? "on" : "off");
+        if (!Options.no_save)
+        {
+            break;
+            // will write code here to save changes
+        }
+        break;
+    }
+
+    case CMD_TOGGLE_SHOWGAMETIME: {
+        if (Options.show_game_time == false)
+            Options.show_game_time = true;
+        else
+            Options.show_game_time = false;
+        mprf("Showing Game Time is now %s.", Options.show_game_time ? "on" : "off");
+        if (!Options.no_save)
+        {
+            break;
+            // will write code here to save changes
+        }
+        break;
+    }
+
+    case CMD_TOGGLE_SAVE_OPTS: {
+        if (Options.no_save == true)
+            Options.no_save = false;
+        else 
+            Options.no_save = true;
+        mprf("Save Options is now %s.", Options.no_save ? "off" : "on");
+        break;
+    }
     case CMD_TOGGLE_AUTOPICKUP:
         if (Options.autopickup_on < 1)
             Options.autopickup_on = 1;
