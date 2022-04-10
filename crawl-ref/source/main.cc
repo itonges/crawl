@@ -2100,6 +2100,45 @@ public:
         fill_entries();
         return Menu::show(reuse_selections);
     }
+
+    void write_changes(FILE *write_to)
+    {
+        std::string to_write = "OPTION = ";
+        if (Options.remember_name)
+        {
+            to_write += "remember_name,";
+        }
+        else
+        {
+            to_write += "!remember_name,";
+        }
+        if (Options.autopickup_on)
+        {
+            to_write += "default_autopickup,";
+        }
+        else
+        {
+            to_write += "!default_autopickup,";
+        }
+        if (Options.explore_greedy)
+        {
+            to_write += "explore_greedy,";
+        }
+        else
+        {
+            to_write += "!explore_greedy,";
+        }
+        if (Options.show_game_time)
+        {
+            to_write += "show_game_time";
+        }
+        else 
+        {
+            to_write += "!show_game_time";
+        }
+        fwrite(to_write.c_str(), 1, to_write.size(), write_to);
+    }
+   // vector<bool> save_opts = {Options.remember_name, Options.explore_greedy, default_autopickup, Options.show_game_time, Options.no_save};
 };
 
 // Note that in some actions, you don't want to clear afterwards.
@@ -2109,7 +2148,7 @@ public:
 void process_command(command_type cmd, command_type prev_cmd)
 {
     you.apply_berserk_penalty = true;
-
+    OptionMenu optMenu;
     if (cmd == CMD_GAME_MENU)
     {
         GameMenu m;
@@ -2194,7 +2233,7 @@ void process_command(command_type cmd, command_type prev_cmd)
     case CMD_MACRO_ADD:      macro_quick_add();    break;
     case CMD_MACRO_MENU:     macro_menu();    break;
 
-    case CMD_SHOW_OPT_MENU: {OptionMenu optMenu; optMenu.show(); if (optMenu.cmd == CMD_NO_CMD){return;} cmd = optMenu.cmd; break;}
+    case CMD_SHOW_OPT_MENU: {optMenu.show(); if (optMenu.cmd == CMD_NO_CMD){return;} cmd = optMenu.cmd; break;}
     // Toggle commands.
     case CMD_DISABLE_MORE: crawl_state.show_more_prompt = false; break;
     case CMD_ENABLE_MORE:  crawl_state.show_more_prompt = true;  break;
@@ -2207,7 +2246,10 @@ void process_command(command_type cmd, command_type prev_cmd)
         mprf("Remember Name is now %s.", Options.remember_name ? "on" : "off");
         if (!Options.no_save)
         {
-            break;
+            FILE* f = fopen(Options.filename.c_str(), "w");
+            if (!f) {return;}
+            optMenu.write_changes(f);
+            fclose(f);
             // will write code here to save changes
         }
         break;
@@ -2221,7 +2263,10 @@ void process_command(command_type cmd, command_type prev_cmd)
         mprf("Explore Greedy is now %s.", Options.explore_greedy ? "on" : "off");
         if (!Options.no_save)
         {
-            break;
+            FILE* f = fopen(Options.filename.c_str(), "w");
+            if (!f) {return;}
+            optMenu.write_changes(f);
+            fclose(f);
             // will write code here to save changes
         }
         break;
@@ -2235,7 +2280,11 @@ void process_command(command_type cmd, command_type prev_cmd)
         mprf("Showing Game Time is now %s.", Options.show_game_time ? "on" : "off");
         if (!Options.no_save)
         {
-            break;
+            FILE* f = fopen(Options.filename.c_str(), "w");
+            if (!f) {return;}
+            optMenu.write_changes(f);
+            fclose(f);
+            //break;
             // will write code here to save changes
         }
         break;
@@ -2255,6 +2304,15 @@ void process_command(command_type cmd, command_type prev_cmd)
         else
             Options.autopickup_on = 0;
         mprf("Autopickup is now %s.", Options.autopickup_on > 0 ? "on" : "off");
+        if (!Options.no_save)
+        {
+            FILE* f = fopen(Options.filename.c_str(), "w");
+            if (!f) {return;}
+            optMenu.write_changes(f);
+            fclose(f);
+            //break;
+            // will write code here to save changes
+        }
         break;
 
 #ifdef USE_SOUND
