@@ -3388,7 +3388,16 @@ tileidx_t tileidx_command(const command_type cmd)
         return TILEG_CMD_DISPLAY_CHARACTER_STATUS;
     case CMD_DISPLAY_KNOWN_OBJECTS:
         return TILEG_CMD_KNOWN_ITEMS;
-    case CMD_SAVE_GAME_NOW:
+    case CMD_TOGGLE_AUTOPICKUP:
+        return TILEG_CMD_AUTOFIGHT;
+    case CMD_TOGGLE_REMBERNAME:
+        return TILEG_CMD_DISPLAY_CHARACTER_STATUS;
+    case (CMD_TOGGLE_EXPLORE_GREEDY):
+        return TILEG_CMD_SEARCH_STASHES;
+    case (CMD_TOGGLE_SHOWGAMETIME):
+        return TILEG_CMD_WAIT;
+    case (CMD_TOGGLE_SAVE_OPTS):
+    case (CMD_SAVE_GAME_NOW):
     case CMD_SAVE_GAME:
         return TILEG_CMD_SAVE_GAME_NOW;
 #ifdef USE_TILE
