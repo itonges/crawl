@@ -1178,6 +1178,74 @@ static void _append_skill_target_desc(string &description, skill_type skill,
     }
 }
 
+static string _describe_brand(brand_type brand)
+{
+    switch (brand) {
+    case SPWPN_ACID:
+    case SPWPN_CHAOS:
+    case SPWPN_DISTORTION:
+    case SPWPN_DRAINING:
+    case SPWPN_ELECTROCUTION:
+    case SPWPN_FLAMING:
+    case SPWPN_FREEZING:
+    case SPWPN_PAIN:
+    case SPWPN_VORPAL:
+    {
+        const string brand_name = uppercase_first(brand_type_name(brand, true));
+        return make_stringf(" + %s", brand_name.c_str());
+    }
+    default:
+        return "";
+    }
+}
+
+static string _damage_rating(const item_def &item)
+{
+    const int base_dam = property(item, PWPN_DAMAGE);
+    const skill_type skill = _item_training_skill(item);
+    const int stat_mult = stat_modify_damage(100, skill, true);
+    const bool use_str = weapon_uses_strength(skill, true);
+    const int skill_mult = apply_fighting_skill(apply_weapon_skill(100, skill, false), false, false);
+
+    const int slaying = slaying_bonus(false);
+    int plusses = slaying;
+    if (item_ident(item, ISFLAG_KNOW_PLUSES))
+        plusses += item.plus;
+
+    brand_type brand = SPWPN_NORMAL;
+    if (item_type_known(item))
+        brand = get_weapon_brand(item);
+
+    const int DAM_RATE_SCALE = 100;
+    int rating = base_dam * DAM_RATE_SCALE;
+    rating = stat_modify_damage(rating, skill, true);
+    rating = apply_weapon_skill(rating, skill, false);
+    rating = apply_fighting_skill(rating, false, false);
+    rating /= DAM_RATE_SCALE;
+    rating += plusses;
+
+    string plusses_desc;
+    if (plusses)
+    {
+        plusses_desc = make_stringf(" %s %d (%s)",
+                                    plusses < 0 ? "-" : "+",
+                                    abs(plusses),
+                                    slaying && item.plus ? "Ench + Slay" :
+                                               item.plus ? "Ench"
+                                                         : "Slay");
+    }
+
+    return make_stringf(
+        "\nDamage rating: %d (Base %d x %d%% (%s) x %d%% (Skill)%s)%s.",
+        rating,
+        base_dam,
+        stat_mult,
+        use_str ? "Str" : "Dex",
+        skill_mult,
+        plusses_desc.c_str(),
+        _describe_brand(brand).c_str());
+}
+
 static void _append_weapon_stats(string &description, const item_def &item)
 {
     const int base_dam = property(item, PWPN_DAMAGE);
@@ -1208,7 +1276,8 @@ static void _append_weapon_stats(string &description, const item_def &item)
         (float) weapon_min_delay(item, item_brand_known(item)) / 10,
         mindelay_skill / 10);
 
-    if (!is_useless_item(item) && crawl_state.need_save)
+    const bool want_player_stats = !is_useless_item(item) && crawl_state.need_save;
+    if (want_player_stats)
     {
         description += "\n    "
             + _your_skill_desc(skill, can_set_target, mindelay_skill);
@@ -1246,6 +1315,9 @@ static void _append_weapon_stats(string &description, const item_def &item)
         }
         description += ".";
     }
+
+    if (want_player_stats && !is_unrandom_artefact(item, UNRAND_DAMNATION))
+        description += _damage_rating(item);
 }
 
 static string _handedness_string(const item_def &item)
@@ -1314,13 +1386,8 @@ static string _describe_weapon(const item_def &item, bool verbose, bool monster)
                 string adj = (item.sub_type == WPN_DAGGER) ? "extremely"
                                                            : "particularly";
                 description += "\n\nIt is " + adj + " good for stabbing"
-                               " helpless or unaware enemies, and dexterity"
-                               " rather than strength increases its damage.";
+                               " helpless or unaware enemies.";
             }
-            break;
-        case SK_LONG_BLADES:
-            description += "\n\nIts damage is increased by dexterity instead"
-                           " of by strength.";
             break;
         default:
             break;
@@ -4785,6 +4852,8 @@ static string _monster_stat_description(const monster_info& mi, bool mark_spells
         }
     }
 
+    if (mi.is(MB_UNBLINDABLE))
+        base_resists.emplace_back("blinding");
     // Resists engulfing/waterlogging but still dies on falling into deep water.
     if (mi.is(MB_RES_DROWN))
         base_resists.emplace_back("drowning");
