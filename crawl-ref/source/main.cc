@@ -2021,7 +2021,7 @@ public:
                 if (c->uses_popup)
                 {
                     // recurse
-                    if (c->cmd != CMD_NO_CMD)
+                    if (c->cmd != CMD_NO_CMD && c->cmd != CMD_RESTORE_DEFAULT)
                     {
                         process_command(c->cmd, CMD_GAME_MENU);
                         std::vector<MenuEntry*> s = selected_entries(); // This section deals with the toggling of the options menu
@@ -2030,11 +2030,30 @@ public:
                         {
                             s[0]->text = s[0]->text.substr(0, s[0]->text.size() - 3) + "on";  // next selection is on 
                         }
-                        else // just selected to be on 
+                        else if (last_let == 'n') // just selected to be on 
                         {
                             s[0]->text = s[0]->text.substr(0, s[0]->text.size() - 2) + "off"; // next selection is off
                         }
                         update_menu(); // update changes to the menu
+                    }
+                    if (c->cmd == CMD_RESTORE_DEFAULT)
+                    {
+                        if (Options.autopickup_on != 1)
+                            process_command(CMD_TOGGLE_AUTOPICKUP); // COMMENT
+                        
+                        if (!Options.remember_name)
+                            process_command(CMD_TOGGLE_REMBERNAME);
+
+                        if (!Options.explore_greedy)
+                            process_command(CMD_TOGGLE_EXPLORE_GREEDY);
+                        
+                        if (!Options.show_game_time)
+                            process_command(CMD_TOGGLE_SHOWGAMETIME);
+
+                        if (Options.no_save)
+                            process_command(CMD_TOGGLE_SAVE_OPTS);
+
+                        return false; // closes the menu after making the changes 
                     }
                     return true;
                 }
@@ -2063,6 +2082,7 @@ public:
         add_entry(new CmdMenuEntry("Show Game Time: " + on_or_off, MEL_ITEM, 'T', CMD_TOGGLE_SHOWGAMETIME));
         on_or_off = Options.no_save ? "off" : "on";
         add_entry(new CmdMenuEntry("Options Save: " + on_or_off, MEL_ITEM, 'S', CMD_TOGGLE_SAVE_OPTS));
+        add_entry(new CmdMenuEntry("Restore to Default", MEL_ITEM, 'D', CMD_RESTORE_DEFAULT));
     }
         // n.b. CMD_SAVE_GAME_NOW crashes on returning to the main menu if we
         // don't exit out of this popup now, not sure why
@@ -2284,8 +2304,6 @@ void process_command(command_type cmd, command_type prev_cmd)
             if (!f) {return;}
             optMenu.write_changes(f);
             fclose(f);
-            //break;
-            // will write code here to save changes
         }
         break;
     }
@@ -2314,6 +2332,7 @@ void process_command(command_type cmd, command_type prev_cmd)
             // will write code here to save changes
         }
         break;
+
 
 #ifdef USE_SOUND
     case CMD_TOGGLE_SOUND:
